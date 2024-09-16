@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Send Email with Gmail</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        var CLIENT_ID = 'YOUR_CLIENT_ID';
+        var API_KEY = 'AIzaSyCL6XL_G5B53CvvDgVk397jzuJ2gZKqxP8';
+        var SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
+        var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"];
+
+        function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: AIzaSyCL6XL_G5B53CvvDgVk397jzuJ2gZKqxP8,
+                clientId: CLIENT_ID,
+                discoveryDocs: DISCOVERY_DOCS,
+                scope: SCOPES.join(' ')
+            }).then(function () {
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                document.getElementById('sendButton').style.display = 'block';
+            } else {
+                gapi.auth2.getAuthInstance().signIn();
+            }
+        }
+
+        function sendEmail() {
+            var recipient = document.getElementById('recipient').value;
+            var subject = document.getElementById('subject').value;
+            var body = document.getElementById('body').value;
+
+            var message = [
+                'Content-Type: text/plain; charset="UTF-8"\n',
+                'Content-Length: ' + body.length + '\n',
+                'Content-Transfer-Encoding: 7bit\n',
+                'To: ' + recipient + '\n',
+                'Subject: ' + subject + '\n\n',
+                body
+            ].join('');
+
+            var encodedMessage = btoa(message).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            
+            gapi.client.gmail.users.messages.send({
+                'userId': 'me',
+                'resource': {
+                    'raw': encodedMessage
+                }
+            }).then(function (response) {
+                alert('Email sent!');
+            });
+        }
+    </script>
+</head>
+<body onload="handleClientLoad()">
+    <h1>Send Email with Gmail</h1>
+    <div>
+        <label for="recipient">To:</label>
+        <input type="email" id="recipient" required>
+    </div>
+    <div>
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" required>
+    </div>
+    <div>
+        <label for="body">Body:</label>
+        <textarea id="body" required></textarea>
+    </div>
+    <button id="sendButton" style="display:none;" onclick="sendEmail()">Send Email</button>
+</body>
+</html>
